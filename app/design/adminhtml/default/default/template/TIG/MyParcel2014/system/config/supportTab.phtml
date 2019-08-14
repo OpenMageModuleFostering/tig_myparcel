@@ -33,8 +33,8 @@
  * versions in the future. If you wish to customize this module for your
  * needs please contact servicedesk@tig.nl for more information.
  *
- * @copyright   Copyright (c) 2014 Total Internet Group B.V. (http://www.totalinternetgroup.nl)
- * @lictig.nlivecommons.org/licenses/by-nc-nd/3.0/nl/deed.en_US
+ * @copyright   Copyright (c) 2015 TIG (http://www.tig.nl)
+ * @license     http://creativecommons.org/licenses/by-nc-nd/3.0/nl/deed.en_US
  */
 ?>
 <?php $_helper = Mage::helper('tig_myparcel'); ?>
@@ -46,7 +46,7 @@
             <tr>
                 <td colspan="3">
                     <div class="text-box">
-                        <?php $url = 'http://kb.totalinternetgroup.nl/topic/99829566';?>
+                        <?php $url = 'http://kb.tig.nl/topic/99829566';?>
                         <h4><?php echo $_helper->__('To download the instructions for the MyParcel  Magento extension, click <a target="_blank" href="%s">here</a>.',$url); ?></h4>
                     </div>
                 </td>
@@ -86,12 +86,16 @@
                         <h3><?php echo $_helper->__('Support');?></h3>
                         <h4><?php echo $_helper->__('Questions and information about your MyParcel account');?></h4>
                         <p><?php echo $_helper->__('For questions related to your MyParcel account,please contact MyParcel.');?></p>
-                        <p><a href="http://www.myparcel.nl" target="_blank"><img src="<?php echo $this->getSkinUrl('images/TIG/MyParcel2014/logo_myparcel.png'); ?>" alt="" /></a></p>
-                        <table class="contact">
+                        <table class="contact tig">
                             <tr>
                                 <td class="first"><?php echo $_helper->__('MyParcel');?>:</td>
                                 <td class="last">
                                     <a target="_blank" href="http://www.myparcel.nl">www.myparcel.nl</a>
+                                </td>
+                                <td rowspan="3">
+                                    <a class="logo_image" href="http://www.myparcel.nl" target="_blank">
+                                        <img src="<?php echo $this->getSkinUrl('images/TIG/MyParcel2014/logo_myparcel.png'); ?>" alt="" />
+                                    </a>
                                 </td>
                             </tr>
                             <tr>
@@ -107,17 +111,16 @@
                             </tr>
                         </table>
                         <h4><?php echo $_helper->__('Extension support and configuration questions');?></h4>
-                        <p><?php echo $_helper->__('For configuration problems, extension conflicts or bugs, please contact Total Internet Group.');?></p>
-                        <p>
-                            <a href="http://www.totalinternetgroup.nl" target="_blank">
-                                <img src="<?php echo $this->getSkinUrl('images/TIG/MyParcel2014/tig_logo_medium.gif'); ?>" alt="" />
-                            </a>
-                        </p>
-                        <table class="contact">
+                        <p><?php echo $_helper->__('For configuration problems, extension conflicts or bugs, please contact TIG.');?></p>
+                        <table class="contact tig">
                             <tr>
                                 <td class="first"><?php echo $_helper->__('Phone');?>:</td>
                                 <td class="last">020 - 2181 001</td>
-
+                                <td rowspan="2">
+                                    <a class="logo_image" href="http://www.tig.nl" target="_blank">
+                                        <img src="<?php echo $this->getSkinUrl('images/TIG/MyParcel2014/tig_logo_medium.png'); ?>" alt="" />
+                                    </a>
+                                </td>
                             </tr>
                             <tr>
                                 <td><?php echo $_helper->__('Email');?>:</td>
@@ -127,22 +130,22 @@
                         <h3><?php echo $_helper->__('Documents');?></h3>
                         <ul>
                             <li>
-                                <a class="link" target="_blank" href="http://kb.totalinternetgroup.nl/topic/99829566" title="<?php echo $_helper->__('Installation and configuration instructions');?>">
+                                <a class="link" target="_blank" href="http://kb.tig.nl/topic/99829566" title="<?php echo $_helper->__('Installation and configuration instructions');?>">
                                     <?php echo $_helper->__('Installation and configuration instructions');?>
                                 </a>
                             </li>
                             <li>
-                                <a class="link" target="_blank" href="http://kb.totalinternetgroup.nl/topic/99831236" title="<?php echo $_helper->__('Full changelog');?>">
+                                <a class="link" target="_blank" href="http://kb.tig.nl/topic/99831236" title="<?php echo $_helper->__('Full changelog');?>">
                                     <?php echo $_helper->__('Full changelog');?>
                                 </a>
                             </li>
                             <li>
-                                <a class="link" target="_blank" href="http://kb.totalinternetgroup.nl/forum/23053573" title="<?php echo $_helper->__('Overview articles in knowledge base');?>">
+                                <a class="link" target="_blank" href="http://kb.tig.nl/forum/23053573" title="<?php echo $_helper->__('Overview articles in knowledge base');?>">
                                     <?php echo $_helper->__('Overview articles in knowledge base');?>
                                 </a>
                             </li>
                         </ul>
-                        <p><?php echo $_helper->__('This extension has been developed by Total Internet Group.');?></p>
+                        <p><?php echo $_helper->__('This extension has been developed by TIG.');?></p>
                     </div>
                 </td>
             </tr>

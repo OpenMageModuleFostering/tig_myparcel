@@ -88,4 +88,50 @@ class TIG_MyParcel2014_Model_Resource_Setup extends Mage_Catalog_Model_Resource_
 
         return $this;
     }
+
+    /**
+     * Copy a config setting from an old xpath to a new xpath directly in the database, rather than using Magento config
+     * entities.
+     *
+     * @param string $fromXpath
+     * @param string $toXpath
+     *
+     * @return $this
+     */
+    public function moveConfigSettingInDb($fromXpath, $toXpath)
+    {
+        $conn = $this->getConnection();
+
+        try {
+            $select = $conn->select()
+                ->from($this->getTable('core/config_data'))
+                ->where('path = ?', $fromXpath);
+
+            $result = $conn->fetchAll($select);
+            foreach ($result as $row) {
+                try {
+                    /**
+                     * Copy the old setting to the new setting.
+                     *
+                     * @todo Check if the row already exists.
+                     */
+                    $conn->insert(
+                        $this->getTable('core/config_data'),
+                        array(
+                            'scope' => $row['scope'],
+                            'scope_id' => $row['scope_id'],
+                            'value' => $row['value'],
+                            'path' => $toXpath
+                        )
+                    );
+                } catch (Exception $e) {
+                    Mage::helper('tig_myparcel')->logException($e);
+                }
+            }
+        } catch (Exception $e) {
+            Mage::helper('tig_myparcel')->logException($e);
+        }
+
+        return $this;
+    }
 }

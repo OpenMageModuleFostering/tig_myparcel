@@ -38,9 +38,11 @@
  *
  * @method boolean hasShipment()
  * @method boolean hasShipmentBaseGrandTotal()
+ * @method string  hasDestinationCountry()
  *
  * @method TIG_MyParcel2014_Block_Adminhtml_Sales_Order_Shipment_Create_ConsignmentOptions setShipment(Mage_Sales_Model_Order_Shipment $value)
  * @method TIG_MyParcel2014_Block_Adminhtml_Sales_Order_Shipment_Create_ConsignmentOptions setShipmentBaseGrandTotal(float $value)
+ * @method TIG_MyParcel2014_Block_Adminhtml_Sales_Order_Shipment_Create_ConsignmentOptions setDestinationCountry(string $value)
  *
  */
 class TIG_MyParcel2014_Block_Adminhtml_Sales_Order_Shipment_Create_ConsignmentOptions extends Mage_Adminhtml_Block_Abstract
@@ -132,18 +134,37 @@ class TIG_MyParcel2014_Block_Adminhtml_Sales_Order_Shipment_Create_ConsignmentOp
     }
 
     /**
+     * Get this shipment's country of destination;
+     *
+     * @return mixed
+     */
+    public function getDestinationCountry()
+    {
+        if ($this->hasDestinationCountry()) {
+            $countryCode = $this->_getData('destination_country');
+            return $countryCode;
+        }
+
+        $shipment = $this->getShipment();
+
+        $shippingAddress = $shipment->getShippingAddress();
+
+        $countryCode = $shippingAddress->getCountry();
+
+        $this->setDestinationCountry($countryCode);
+        return $countryCode;
+    }
+
+    /**
      * Check if shipment country needs customs
      *
      * @return bool
      */
     public function countryNeedsCustoms()
     {
-        $shipment = $this->getShipment();
         $helper = Mage::helper('tig_myparcel');
 
-        $shippingAddress = $shipment->getShippingAddress();
-
-        $countryCode = $shippingAddress->getCountry();
+        $countryCode = $this->getDestinationCountry();
 
         return $helper->countryNeedsCustoms($countryCode);
 
@@ -171,6 +192,11 @@ class TIG_MyParcel2014_Block_Adminhtml_Sales_Order_Shipment_Create_ConsignmentOp
         return Mage::getModel('tig_myparcel/system_config_source_customs')->toOptionArray();
     }
 
+    /**
+     * @param $shipmentOption
+     *
+     * @return string
+     */
     public function getIsSelected($shipmentOption)
     {
         $helper = Mage::helper('tig_myparcel');
@@ -216,26 +242,82 @@ class TIG_MyParcel2014_Block_Adminhtml_Sales_Order_Shipment_Create_ConsignmentOp
      */
     public function getIsInsured()
     {
+
+        //load helper, store id and orderTotal
         $helper            = Mage::helper('tig_myparcel');
         $storeId           = $this->getOrderStoreId();
         $orderTotalShipped = $this->getOrderTotal();
-        $insuredType       = 'insured_50';
-        if($orderTotalShipped > 50 && $orderTotalShipped < 250){
-            $insuredType = 'insured_250';
-        }elseif($orderTotalShipped > 250){
-            $insuredType = 'insured_500';
+
+        //get the insured values
+        $insuredType50     = $helper->getConfig('insured_50',  'shipment', $storeId);
+        $insuredType250    = $helper->getConfig('insured_250', 'shipment', $storeId);
+        $insuredType500    = $helper->getConfig('insured_500', 'shipment', $storeId);
+
+        //check if the values are not empty/zero
+        $insuredType50     = (!empty($insuredType50) && $insuredType50 > 0)? $insuredType50 : false;
+        $insuredType250    = (!empty($insuredType250) && $insuredType250 > 0)? $insuredType250 : false;
+        $insuredType500    = (!empty($insuredType500) && $insuredType500 > 0)? $insuredType500 : false;
+
+        //if nothing is filled in, then set the default values, but do not pre-select
+        $selected = 'checked="checked"';
+        if(
+            false === $insuredType50 &&
+            false === $insuredType250 &&
+            false === $insuredType500
+        ){
+            $insuredType50  = 50;
+            $insuredType250 = 250;
+            $insuredType500 = 500;
+            $selected = 0;
         }
 
-        $configValue = $helper->getConfig($insuredType,'shipment',$storeId);
-        if(!empty($configValue) && $configValue > 0){
-            if($orderTotalShipped < $configValue){
-                return array(
-                    'selected'      => 'checked="checked"',
-                    'insuredAmount' => $configValue,
-                );
-            }
+        if(false !== $insuredType500 && $orderTotalShipped > $insuredType500){
+            $insuredValue = $insuredType500;
+            $insuredUpTo = 500;
+        }elseif(false !== $insuredType250 && $orderTotalShipped > $insuredType250){
+            $insuredValue = $insuredType250;
+            $insuredUpTo = 250;
+        }elseif(false !== $insuredType50 && $orderTotalShipped > $insuredType50){
+            $insuredValue = $insuredType50;
+            $insuredUpTo = 50;
+        }else{
+            $insuredValue = 0;
+            $insuredUpTo = 0;
+            $selected = 0;
         }
 
-        return '';
+        $returnArray = array(
+            'option'         => 'insured',
+            'selected'       => $selected,
+            'insuredAmount' => 0,
+            'insuredUpTo'   => 0,
+        );
+
+        if($insuredValue > 0){
+            $returnArray = array(
+                'option'        => 'insured',
+                'selected'      => $selected,
+                'insuredAmount' => $insuredValue,
+                'insuredUpTo'   => $insuredUpTo,
+            );
+        }
+
+        return $returnArray;
+    }
+
+    /**
+     * Check if the shipment is placed using Pakjegemak
+     *
+     * @return bool
+     */
+    public function getIsPakjeGemak()
+    {
+        $helper   = Mage::helper('tig_myparcel');
+        $shipment = Mage::registry('current_shipment');
+
+        if($helper->getPgAddress($shipment->getOrder())){
+            return true;
+        }
+        return false;
     }
 }

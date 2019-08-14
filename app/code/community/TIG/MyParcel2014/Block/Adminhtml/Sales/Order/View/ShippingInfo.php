@@ -85,4 +85,20 @@ class TIG_MyParcel2014_Block_Adminhtml_Sales_Order_View_ShippingInfo extends Mag
 
         return parent::_toHtml();
     }
+
+    /**
+     * Check if the shipment is placed using Pakjegemak
+     *
+     * @return bool
+     */
+    public function getIsPakjeGemak()
+    {
+        $helper   = Mage::helper('tig_myparcel');
+        $shipment = Mage::registry('current_shipment');
+
+        if($helper->getPgAddress($shipment->getOrder())){
+            return true;
+        }
+        return false;
+    }
 }

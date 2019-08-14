@@ -4,7 +4,7 @@
         <!-- add MyParcel shipping method to the shipping-methods list -->
         <carriers translate="label" module="shipping">
             <groups>
-                <tig_myparcel translate="label">
+                <myparcel translate="label">
                     <label>MyParcel</label>
                     <frontend_type>text</frontend_type>
                     <sort_order>0</sort_order>
@@ -113,7 +113,18 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>0</show_in_store>
                         </pakjegemak_active>
-                        <pakjegemak_fee translate="label" module="tig_myparcel">
+                        <pakjegemak_title translate="label" module="tig_myparcel">
+                            <label>Pakjegemak Method Name</label>
+                            <frontend_type>text</frontend_type>
+                            <sort_order>105</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>1</show_in_store>
+                            <depends>
+                                <pakjegemak_active>1</pakjegemak_active>
+                            </depends>
+                        </pakjegemak_title>
+                        <pakjegemak_fee translate="label,comment" module="tig_myparcel">
                             <label>Pakjegemak fee</label>
                             <comment>This will be added to the regular shipping price</comment>
                             <frontend_type>text</frontend_type>
@@ -126,11 +137,37 @@
                                 <pakjegemak_active>1</pakjegemak_active>
                             </depends>
                         </pakjegemak_fee>
+                        <pakjegemak_min_order_enabled translate="label,comment" module="tig_myparcel">
+                            <label>Pakjegemak minimum order total enabled</label>
+                            <frontend_type>select</frontend_type>
+                            <source_model>tig_myparcel/system_config_source_yesno</source_model>
+                            <sort_order>120</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <depends>
+                                <pakjegemak_active>1</pakjegemak_active>
+                            </depends>
+                        </pakjegemak_min_order_enabled>
+                        <pakjegemak_min_order_total translate="label,comment" module="tig_myparcel">
+                            <label>Pakjegemak minimum order total, incl. BTW</label>
+                            <comment>Pakjegemak will not be visible if the subtotal of an order is below this value</comment>
+                            <frontend_type>text</frontend_type>
+                            <validate>validate-number validate-zero-or-greater</validate>
+                            <sort_order>130</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>1</show_in_website>
+                            <show_in_store>0</show_in_store>
+                            <depends>
+                                <pakjegemak_active>1</pakjegemak_active>
+                                <pakjegemak_min_order_enabled>1</pakjegemak_min_order_enabled>
+                            </depends>
+                        </pakjegemak_min_order_total>
                         <!-- allow specific countries -->
                         <sallowspecific translate="label" module="tig_myparcel">
                             <label>Ship to Applicable Countries</label>
                             <frontend_type>select</frontend_type>
-                            <sort_order>120</sort_order>
+                            <sort_order>140</sort_order>
                             <frontend_class>shipping-applicable-country</frontend_class>
                             <source_model>adminhtml/system_config_source_shipping_allspecificcountries</source_model>
                             <show_in_default>1</show_in_default>
@@ -140,7 +177,7 @@
                         <specificcountry translate="label" module="tig_myparcel">
                             <label>Ship to Specific Countries</label>
                             <frontend_type>multiselect</frontend_type>
-                            <sort_order>130</sort_order>
+                            <sort_order>150</sort_order>
                             <source_model>adminhtml/system_config_source_country</source_model>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
@@ -150,13 +187,13 @@
                         <sort_order translate="label" module="tig_myparcel">
                             <label>Sort Order</label>
                             <frontend_type>text</frontend_type>
-                            <sort_order>140</sort_order>
+                            <sort_order>160</sort_order>
                             <show_in_default>1</show_in_default>
                             <show_in_website>1</show_in_website>
                             <show_in_store>0</show_in_store>
                         </sort_order>
                     </fields>
-                </tig_myparcel>
+                </myparcel>
             </groups>
         </carriers>
         <!-- add the configuration page as seperate page to the backend -->
@@ -264,6 +301,33 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                         </tracktrace_template>
+                        <myparcel_shipping_methods translate="label tooltip" module="tig_myparcel">
+                            <label>MyParcel shipping methods</label>
+                            <tooltip>Please select the shipping methods that will be considered to be 'MyParcel' by this extension. Orders placed using one of these shipping methods may be processed using the MyParcel extension.</tooltip>
+                            <frontend_type>multiselect</frontend_type>
+                            <can_be_empty>0</can_be_empty>
+                            <source_model>tig_myparcel/system_config_source_shippingMethods</source_model>
+                            <sort_order>60</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <show_in_website>0</show_in_website>
+                            <show_in_store>0</show_in_store>
+                        </myparcel_shipping_methods>
+                        <ssl_handshake translate="label comment tooltip">
+                            <label>Force unencrypted MyParcel connection</label>
+                            <comment>By enabling this, you will force connection to the MyParcel platform over unsecured http, rather than https</comment>
+                            <tooltip>In some cases the SSL certification can't be validated, which can lead to problems connection to the MyParcel platform. Only use this if you are aware that all communication to MyParcel will be sent over the unsecure https protocol.</tooltip>
+                            <frontend_type>select</frontend_type>
+                            <source_model>tig_myparcel/system_config_source_yesno</source_model>
+                            <sort_order>60</sort_order>
+                            <show_in_default>1</show_in_default>
+                            <depends><use_in_adminhtml>1</use_in_adminhtml></depends>
+                        </ssl_handshake>
+                        <use_in_adminhtml>
+                            <frontend_type>hidden</frontend_type>
+                            <frontend_model>tig_myparcel/adminhtml_system_config_adminSecure</frontend_model>
+                            <sort_order>70</sort_order>
+                            <show_in_default>1</show_in_default>
+                        </use_in_adminhtml>
                     </fields>
                 </general>
                 <shipment translate="label comment" module="tig_myparcel">
@@ -305,7 +369,7 @@
                         </return_if_no_answer>
                         <insured_50 translate="label comment">
                             <label><![CDATA[Insured up to &euro; 50]]></label>
-                            <comment>For NL shipping only</comment>
+                            <comment>Only for dutch shipments</comment>
                             <frontend_type>text</frontend_type>
                             <validate>validate-number validate-zero-or-greater</validate>
                             <sort_order>40</sort_order>
@@ -313,7 +377,7 @@
                             <show_in_website>1</show_in_website>
                             <show_in_store>1</show_in_store>
                         </insured_50>
-                        <insured_250 translate="label comment">
+                        <insured_250 translate="label">
                             <label><![CDATA[Insured up to &euro; 250]]></label>
                             <comment><![CDATA[For NL shipping only, shipments outside the EU insured default is &euro; 200]]></comment>
                             <frontend_type>text</frontend_type>

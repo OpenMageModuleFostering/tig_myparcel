@@ -50,7 +50,7 @@ class TIG_MyParcel2014_Helper_Data extends Mage_Core_Helper_Abstract {
      * Regular expression used to split street name from house number. This regex works well for dutch addresses, but
      * may fail for international addresses. We strongly recommend using split address lines instead.
      */
-    const SPLIT_STREET_REGEX = '#\A(.*?)\s+(\d+[a-zA-Z]{0,1}\s{0,1}[-]{1}\s{0,1}\d*[a-zA-Z]{0,1}|\d+[a-zA-Z-]{0,1}\d*[a-zA-Z]{0,1})#';
+    const SPLIT_STREET_REGEX = '#\A(.*?)\s+(\d+\s[a-zA-Z]?|\d+[a-zA-Z]{0,1}\s{0,1}[-]{1}\s{0,1}\d*[a-zA-Z]{0,1}|\d+[a-zA-Z-]{0,1}\d*[a-zA-Z]{0,1})#';
 
     /**
      * Regular expression used to split house number and house number extension
@@ -75,10 +75,7 @@ class TIG_MyParcel2014_Helper_Data extends Mage_Core_Helper_Abstract {
      * Localised track and trace base URL's
      */
     const POSTNL_TRACK_AND_TRACE_NL_BASE_URL  = 'https://mijnpakket.postnl.nl/Inbox/Search?';
-    const POSTNL_TRACK_AND_TRACE_GB_BASE_URL  = 'http://parcels-uk.tntpost.com/mytrackandtrace/trackandtrace.aspx?';
-    const POSTNL_TRACK_AND_TRACE_DE_BASE_URL  = 'http://parcels-de.tntpost.com/de/mytrackandtrace/TrackAndTrace.aspx?';
-    const POSTNL_TRACK_AND_TRACE_FR_BASE_URL  = 'http://parcels-fr.tntpost.com/fr/mytrackandtrace/TrackAndTrace.aspx?';
-    const POSTNL_TRACK_AND_TRACE_INT_BASE_URL = 'http://www.postnlpakketten.nl/klantenservice/tracktrace/basicsearch.aspx?';
+    const POSTNL_TRACK_AND_TRACE_INT_BASE_URL = 'https://www.internationalparceltracking.com/Main.aspx#/track';
 
     /**
      * List of MyParcel shipping methods.
@@ -99,20 +96,13 @@ class TIG_MyParcel2014_Helper_Data extends Mage_Core_Helper_Abstract {
      */
     public function getConfig($value, $group = 'general', $storeId = null, $decrypt = false)
     {
-        if(empty($storeId)) // in case of frontend calls
-        {
+        if (empty($storeId)) { // in case of frontend calls
             $storeId = Mage::app()->getStore()->getId();
         }
         $config = Mage::getStoreConfig('tig_myparcel/' . $group . '/' . $value, $storeId);
 
-        if($decrypt)
-        {
+        if ($decrypt) {
             $config = Mage::helper('core')->decrypt($config);
-        }
-
-        if(Mage::app()->getStore()->isCurrentlySecure())
-        {
-            $config = str_replace('http://', 'https://', $config);
         }
 
         return trim($config);
@@ -173,27 +163,14 @@ class TIG_MyParcel2014_Helper_Data extends Mage_Core_Helper_Abstract {
      */
     public function getMyParcelShippingMethods()
     {
-        if ($this->_myParcelShippingMethods != null) {
-            return $this->_myParcelShippingMethods;
+        if ($this->_myParcelShippingMethods == null) {
+            $shippingMethods = $this->getConfig('myparcel_shipping_methods');
+            $shippingMethods = explode(',', $shippingMethods);
+
+            $this->_myParcelShippingMethods = $shippingMethods;
         }
 
-        /**
-         * Get the MyParcel carrier code and all it's methods.
-         */
-        $myParcelCarrier = Mage::getModel('tig_myparcel/carrier_myParcel');
-        $myParcelCode    = $myParcelCarrier->getCarrierCode();
-        $myParcelMethods = $myParcelCarrier->getAllowedMethods();
-
-        /**
-         * Form an array of shipping methods.
-         */
-        $methods = array();
-        foreach (array_keys($myParcelMethods) as $method) {
-            $methods[] = $myParcelCode . '_' . $method;
-        }
-
-        $this->_myParcelShippingMethods = $methods;
-        return $methods;
+        return $this->_myParcelShippingMethods;
     }
 
     /**
@@ -246,8 +223,11 @@ class TIG_MyParcel2014_Helper_Data extends Mage_Core_Helper_Abstract {
             'SK','ES','CZ','GB','SE',
         );
         $whitelisted = in_array($countryCode, $whitelist);
+        if (!$whitelisted) {
+            return true;
+        }
 
-        return (!$whitelisted);
+        return false;
     }
 
     /**
@@ -265,17 +245,25 @@ class TIG_MyParcel2014_Helper_Data extends Mage_Core_Helper_Abstract {
         $countryCode = null;
         $postcode    = null;
         if (is_array($destination)) {
+            if (!isset($destination['countryCode'])) {
+                throw new InvalidArgumentException("Destination must contain a country code.");
+            }
+
             $countryCode = $destination['countryCode'];
             $postcode    = $destination['postcode'];
-        }
+        } elseif (is_object($destination) && $destination instanceof Varien_Object) {
+            if (!$destination->getCountry()) {
+                throw new InvalidArgumentException('Destination must contain a country code.');
+            }
 
-        if (is_object($destination) && $destination instanceof Varien_Object) {
             $countryCode = $destination->getCountry();
             $postcode    = str_replace(' ', '', $destination->getPostcode());
+        } else {
+            throw new InvalidArgumentException('Destination must be an array or an instance of Varien_Object.');
         }
 
         /**
-         * Get the dutch track & trace URL for dutch shipments or for the admin
+         * Get the dutch track & trace URL for dutch shipments or for the admin.
          */
         if ($forceNl
             || (!empty($countryCode)
@@ -285,7 +273,7 @@ class TIG_MyParcel2014_Helper_Data extends Mage_Core_Helper_Abstract {
             $barcodeUrl = self::POSTNL_TRACK_AND_TRACE_NL_BASE_URL
                 . '&b=' . $barcode;
             /**
-             * For dutch shipments add the postcode. For international shipments add an 'international' flag
+             * For dutch shipments add the postcode. For international shipments add an 'international' flag.
              */
             if (!empty($postcode)
                 && !empty($countryCode)
@@ -300,52 +288,14 @@ class TIG_MyParcel2014_Helper_Data extends Mage_Core_Helper_Abstract {
         }
 
         /**
-         * Get localized track & trace URLs for UK, DE and FR shipments
-         */
-        if (isset($countryCode)
-            && ($countryCode == 'UK'
-                || $countryCode == 'GB'
-            )
-        ) {
-            $barcodeUrl = self::POSTNL_TRACK_AND_TRACE_GB_BASE_URL
-                . '&B=' . $barcode
-                . '&D=GB'
-                . '&lang=en';
-
-            return $barcodeUrl;
-        }
-
-        if (isset($countryCode) && $countryCode == 'DE') {
-            $barcodeUrl = self::POSTNL_TRACK_AND_TRACE_DE_BASE_URL
-                . '&B=' . $barcode
-                . '&D=DE'
-                . '&lang=de';
-
-            return $barcodeUrl;
-        }
-
-        if (isset($countryCode) && $countryCode == 'FR') {
-            $barcodeUrl = self::POSTNL_TRACK_AND_TRACE_FR_BASE_URL
-                . '&B=' . $barcode
-                . '&D=FR'
-                . '&lang=fr';
-
-            return $barcodeUrl;
-        }
-
-        /**
-         * Get a general track & trace URL for all other destinations
+         * Get a general track & trace URL for all other destinations.
          */
         $barcodeUrl = self::POSTNL_TRACK_AND_TRACE_INT_BASE_URL
-            . '&B=' . $barcode
-            . '&I=true';
+            . '/' . $barcode
+            . '/' . $countryCode;
 
-        if ($lang) {
-            $barcodeUrl .= '&lang=' . strtolower($lang);
-        }
-
-        if ($countryCode) {
-            $barcodeUrl .= '&D=' . $countryCode;
+        if (!empty($postcode)) {
+            $barcodeUrl .= '/' . $postcode;
         }
 
         return $barcodeUrl;
@@ -939,32 +889,48 @@ class TIG_MyParcel2014_Helper_Data extends Mage_Core_Helper_Abstract {
             return false;
         }
 
-        $store      = $myParcelShipment->getOrder()->getStoreId();
-        $templateId = $this->getConfig('tracktrace_template','general',$store);
+        $order      = $myParcelShipment->getOrder();
+        $storeId    = $order->getStoreId();
+        $templateId = $this->getConfig('tracktrace_template','general',$storeId);
 
         //if no template is set, return false: tracktrace should be send by MyParcel
         if($templateId === null || $templateId == 'tig_myparcel_general_tracktrace_template'){
             return false;
         }
 
+        try {
+            // Retrieve specified view block from appropriate design package (depends on emulated store)
+            $paymentBlock = Mage::helper('payment')->getInfoBlock($order->getPayment())
+                ->setIsSecureMode(true);
+            $paymentBlock->getMethod()->setStore($storeId);
+            $paymentBlockHtml = $paymentBlock->toHtml();
+        } catch (Exception $exception) {
+            $paymentBlockHtml = '';
+        }
+
         $shippingAddress   = $myParcelShipment->getShippingAddress();
         $barcodeUrl        = $this->getBarcodeUrl($barcode,$shippingAddress);
         $templateVariables = array(
             'tracktrace_url' => $barcodeUrl,
+            'order'          => $order,
+            'shipment' 		 => $myParcelShipment->getShipment(),
+            'billing' 		 => $order->getBillingAddress(),
+            'payment_html'   => $paymentBlockHtml,
         );
 
         try {
             $mailer    = Mage::getModel('core/email_template_mailer');
             $emailInfo = Mage::getModel('core/email_info');
-            $emailInfo->addTo($myParcelShipment->getOrder()->getCustomerEmail(), $shippingAddress->getName());
+            $emailInfo->addTo($order->getCustomerEmail(), $shippingAddress->getName());
 
             $mailer->addEmailInfo($emailInfo);
 
             // Set all required params and send emails.
-            $mailer->setSender(Mage::getStoreConfig(self::XML_PATH_EMAIL_IDENTITY, $store));
-            $mailer->setStoreId($store);
+            $mailer->setSender(Mage::getStoreConfig(self::XML_PATH_EMAIL_IDENTITY, $storeId));
+            $mailer->setStoreId($storeId);
             $mailer->setTemplateId($templateId);
             $mailer->setTemplateParams($templateVariables);
+
             $mailer->send();
         }catch(Exception $e) {
             $this->logException($e);

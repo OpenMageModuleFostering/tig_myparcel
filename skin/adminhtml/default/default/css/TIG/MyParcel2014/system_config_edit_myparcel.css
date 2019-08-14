@@ -13,8 +13,10 @@
 #tig_myparcel_myparcel_support a.link { display: inline-block; height: 16px; line-height: 16px; padding: 0 0 0 21px; background:url(../../../images/btn_go.gif) no-repeat 0 40%; }
 #tig_myparcel_myparcel_support .text-box { background:#fff; padding:9px 16px; margin:6px 0 10px; border:1px solid #ccc; }
 #tig_myparcel_myparcel_support table.contact { margin:0 0 25px -1px; }
-#tig_myparcel_myparcel_support table.contact td { padding:0; }
-#tig_myparcel_myparcel_support table.contact td.first { width:150px; padding-right:5px; }
+#tig_myparcel_myparcel_support table.contact td { padding:0; width:110px; }
+#tig_myparcel_myparcel_support table.contact td.first {  padding-right:5px; }
+#tig_myparcel_myparcel_support table.tig td a.logo_image { margin-left:10px; }
+#tig_myparcel_myparcel_support table.tig td a.logo_image img {width:45px;}
 
 /* Legend */
 #tig_myparcel_myparcel_support #legend li { background:url(../../../images/TIG/MyParcel2014/legend.gif) 0 0 no-repeat; padding-left:14px;  }

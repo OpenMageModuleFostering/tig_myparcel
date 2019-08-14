@@ -92,8 +92,6 @@ class TIG_MyParcel2014_Block_Adminhtml_Widget_Grid_Column_Renderer_ShippingStatu
                 $barcodeUrl = Mage::helper('tig_myparcel')->getBarcodeUrl($barcodes[$key], $destinationData, false, true);
 
                 $barcodeData[] = "<small>{$status}</small> - <a href='{$barcodeUrl}' target='_blank'>{$barcodes[$key]}</a>";
-            } else {
-                $barcodeData[] = $status;
             }
         }
 

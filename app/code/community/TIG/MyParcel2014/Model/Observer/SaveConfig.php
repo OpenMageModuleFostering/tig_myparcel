@@ -67,11 +67,11 @@ class TIG_MyParcel2014_Model_Observer_SaveConfig extends Varien_Object
         $controller    = $observer->getControllerAction();
         $section = $controller->getRequest()->getParam('section');
 
-        if($section == 'tig_myparcel')
+        if($section == 'myparcel')
         {
             $api = Mage::getModel('tig_myparcel/api_myParcel');
 
-            $response = $api->createRegisterConfigRequest()->sendRequest(); // no getRequestResponse()
+            $api->createRegisterConfigRequest()->sendRequest(); // no getRequestResponse()
         }
 
         return $this;

@@ -2,7 +2,7 @@
 <config>
     <modules>
         <TIG_MyParcel2014>
-            <version>1.1.4</version>
+            <version>1.3.0</version>
         </TIG_MyParcel2014>
     </modules>
     <global>
@@ -118,19 +118,38 @@
                     </tig_myparcel_shipment_save>
                 </observers>
             </controller_action_predispatch_adminhtml_sales_order_shipment_save>
-			<adminhtml_block_html_before>
-			    <observers>
-			   		<!-- Adds a massaction the grid that allows merchants to print shipping labels for selected orders-->
+            <adminhtml_block_html_before>
+                <observers>
+                     <!-- Adds a massaction the grid that allows merchants to print shipping labels for selected orders-->
                     <tig_myparcel_adminhtml_ordergrid>
-					    <type>singleton</type>
-					    <class>tig_myparcel/adminhtml_observer_orderGrid</class>
-					    <method>modifyGrid</method>
-				    </tig_myparcel_adminhtml_ordergrid>
-			    </observers>
-			</adminhtml_block_html_before>
+                        <type>singleton</type>
+                        <class>tig_myparcel/adminhtml_observer_orderGrid</class>
+                        <method>modifyGrid</method>
+                    </tig_myparcel_adminhtml_ordergrid>
+                    <!-- Adds a column with shipping status to the shipment grid -->
+                    <tig_myparcel_adminhtml_shipmentgrid>
+                        <type>singleton</type>
+                        <class>tig_myparcel/adminhtml_observer_shipmentGrid</class>
+                        <method>modifyGrid</method>
+                    </tig_myparcel_adminhtml_shipmentgrid>
+                 </observers>
+            </adminhtml_block_html_before>
+            <adminhtml_widget_container_html_before>
+                <observers>
+                    <tig_myparcel_adminhtml_view_shipment>
+                        <class>tig_myparcel/adminhtml_observer_viewShipment</class>
+                        <type>singleton</type>
+                        <method>adminhtmlWidgetContainerHtmlBefore</method>
+                    </tig_myparcel_adminhtml_view_shipment>
+                </observers>
+            </adminhtml_widget_container_html_before>
         </events>
     </adminhtml>
+
     <frontend>
+        <secure_url>
+            <myparcel_checkout>/myparcel2014/checkout</myparcel_checkout>
+        </secure_url>
         <routers>
             <tig_myparcel>
                 <use>standard</use>
@@ -156,28 +175,6 @@
                 </TIG_MyParcel2014>
             </modules>
         </translate>
-        <events>
-            <controller_action_postdispatch_checkout_onepage_saveShippingMethod>
-                <observers>
-                    <!-- Saves a selected PG address for Onepage checkout. -->
-                    <tig_myparcel_save_pg_address>
-                        <type>singleton</type>
-                        <class>tig_myparcel/observer_savePgAddress</class>
-                        <method>savePgAddress</method>
-                    </tig_myparcel_save_pg_address>
-                </observers>
-            </controller_action_postdispatch_checkout_onepage_saveShippingMethod>
-            <controller_action_postdispatch_onestepcheckout_index_index>
-                <observers>
-                    <!-- Saves a selected PG address for OneStepCheckout. -->
-                    <tig_myparcel_save_pg_address>
-                        <type>singleton</type>
-                        <class>tig_myparcel/observer_savePgAddress</class>
-                        <method>savePgAddress</method>
-                    </tig_myparcel_save_pg_address>
-                </observers>
-            </controller_action_postdispatch_onestepcheckout_index_index>
-        </events>
     </frontend>
 
     <crontab>
@@ -194,16 +191,19 @@
 
     <default>
         <carriers>
-            <tig_myparcel>
+            <myparcel>
                 <active>0</active>
                 <model>tig_myparcel/carrier_myParcel</model>
                 <title>MyParcel Shipping</title>
+                <name>MyParcel</name>
                 <rate_type>flat</rate_type>
                 <pakjegemak_active>0</pakjegemak_active>
+                <pakjegemak_title>Pakjegemak</pakjegemak_title>
                 <pakjegemak_fee>0</pakjegemak_fee>
+                <pakjegemak_min_order_enabled>0</pakjegemak_min_order_enabled>
                 <sort_order>10</sort_order>
                 <sallowspecific>0</sallowspecific>
-            </tig_myparcel>
+            </myparcel>
         </carriers>
         <tig_myparcel>
             <api>
@@ -215,6 +215,8 @@
                 <active>0</active>
                 <test>0</test>
                 <print_orientation>A4</print_orientation>
+                <myparcel_shipping_methods>tig_myparcel_flatrate,myparcel_flatrate,tig_myparcel_tablerate,myparcel_tablerate,tig_myparcel_pakjegemak,myparcel_pakjegemak</myparcel_shipping_methods>
+                <ssl_handshake>0</ssl_handshake>
             </general>
             <shipment>
                 <home_address_only>0</home_address_only>
@@ -246,7 +248,7 @@
 
         <!-- Stability of this release -->
         <stability>
-            <tig_myparcel>stable</tig_myparcel>
+            <tig_myparcel>develop</tig_myparcel>
         </stability>
 
         <!-- A list of possible error codes recognized by this extension. Each error has a default message, a link to
@@ -362,6 +364,14 @@
                 <url/>
                 <type>error</type>
             </MYPA-0022>
+            <MYPA-0023>
+                <message>The selected shipment-type cannot be used, Pakjegemak-shipments can only be created with the normal shipment type.</message>
+                <url/>
+                <type>error</type>
+            </MYPA-0023>
+            <MYPA-0024>
+                <message>Order %s cannot be shipped, because it is cancelled.</message>
+            </MYPA-0024>
         </errors>
     </tig>
 </config>

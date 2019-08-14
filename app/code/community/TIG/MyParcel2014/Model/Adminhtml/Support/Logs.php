@@ -60,8 +60,6 @@ class TIG_MyParcel2014_Model_Adminhtml_Support_Logs
      */
     public function downloadLogs()
     {
-        $helper = Mage::helper('tig_myparcel');
-
         /**
          * Get the log folder and check if there are log files in it.
          */

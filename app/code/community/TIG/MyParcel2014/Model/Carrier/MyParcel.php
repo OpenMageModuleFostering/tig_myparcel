@@ -1,4 +1,43 @@
 <?php
+/**
+ *                  ___________       __            __
+ *                  \__    ___/____ _/  |_ _____   |  |
+ *                    |    |  /  _ \\   __\\__  \  |  |
+ *                    |    | |  |_| ||  |   / __ \_|  |__
+ *                    |____|  \____/ |__|  (____  /|____/
+ *                                              \/
+ *          ___          __                                   __
+ *         |   |  ____ _/  |_   ____ _______   ____    ____ _/  |_
+ *         |   | /    \\   __\_/ __ \\_  __ \ /    \ _/ __ \\   __\
+ *         |   ||   |  \|  |  \  ___/ |  | \/|   |  \\  ___/ |  |
+ *         |___||___|  /|__|   \_____>|__|   |___|  / \_____>|__|
+ *                  \/                           \/
+ *                  ________
+ *                 /  _____/_______   ____   __ __ ______
+ *                /   \  ___\_  __ \ /  _ \ |  |  \\____ \
+ *                \    \_\  \|  | \/|  |_| ||  |  /|  |_| |
+ *                 \______  /|__|    \____/ |____/ |   __/
+ *                        \/                       |__|
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Creative Commons License.
+ * It is available through the world-wide-web at this URL:
+ * http://creativecommons.org/licenses/by-nc-nd/3.0/nl/deed.en_US
+ * If you are unable to obtain it through the world-wide-web, please send an email
+ * to servicedesk@tig.nl so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this module to newer
+ * versions in the future. If you wish to customize this module for your
+ * needs please contact servicedesk@tig.nl for more information.
+ *
+ * @copyright   Copyright (c) 2014 Total Internet Group B.V. (http://www.tig.nl)
+ * @license     http://creativecommons.org/licenses/by-nc-nd/3.0/nl/deed.en_US
+ *
+ *
+ */
 
 class TIG_MyParcel2014_Model_Carrier_MyParcel extends Mage_Shipping_Model_Carrier_Abstract
     implements Mage_Shipping_Model_Carrier_Interface
@@ -6,14 +45,14 @@ class TIG_MyParcel2014_Model_Carrier_MyParcel extends Mage_Shipping_Model_Carrie
     /**
      * Rate type (tablerate or flatrate).
      */
-    const XML_PATH_RATE_TYPE = 'carriers/tig_myparcel/rate_type';
+    const XML_PATH_RATE_TYPE = 'carriers/myparcel/rate_type';
 
     /**
      * MyParcel Carrier code
      *
      * @var string
      */
-    protected $_code = 'tig_myparcel';
+    protected $_code = TIG_MyParcel2014_Model_Shipment::MYPARCEL_CARRIER_CODE;
 
     /**
      * Fixed price flag
@@ -33,6 +72,67 @@ class TIG_MyParcel2014_Model_Carrier_MyParcel extends Mage_Shipping_Model_Carrie
     public function __construct()
     {
         parent::__construct();
+    }
+
+    /**
+     * Check if carrier has shipping tracking option available
+     *
+     * @return boolean
+     */
+    public function isTrackingAvailable()
+    {
+        return true;
+    }
+
+    /**
+     * Get tracking information.
+     *
+     * @param string $tracking
+     *
+     * @return Mage_Shipping_Model_Tracking_Result_Status
+     */
+    public function getTrackingInfo($tracking)
+    {
+        $statusModel = Mage::getModel('shipping/tracking_result_status');
+        $track       = $this->_getTrackByNumber($tracking);
+        $shipment    = $track->getShipment();
+
+        $shippingAddress = $shipment->getShippingAddress();
+        $barcodeUrl      = Mage::helper('tig_myparcel')->getBarcodeUrl(
+            $track->getTrackNumber(),
+            $shippingAddress
+        );
+
+        $statusModel->setCarrier($track->getCarrierCode())
+            ->setCarrierTitle($this->getConfigData('name'))
+            ->setTracking($track->getTrackNumber())
+            ->setPopup(1)
+            ->setUrl($barcodeUrl);
+
+        return $statusModel;
+    }
+
+    /**
+     * Load track object by tracking number
+     *
+     * @param string $number
+     *
+     * @return Mage_Sales_Model_Order_Shipment_Track
+     */
+    protected function _getTrackByNumber($number)
+    {
+        $coreResource = Mage::getSingleton('core/resource');
+        $readConn = $coreResource->getConnection('core_read');
+
+        $trackSelect = $readConn->select();
+        $trackSelect->from($coreResource->getTableName('sales/shipment_track'), array('entity_id'));
+        $trackSelect->where('track_number = ?', $number);
+
+        $trackId = $readConn->fetchOne($trackSelect);
+
+        $track = Mage::getModel('sales/order_shipment_track')->load($trackId);
+
+        return $track;
     }
 
     /**
@@ -73,30 +173,60 @@ class TIG_MyParcel2014_Model_Carrier_MyParcel extends Mage_Shipping_Model_Carrie
         }
 
         // add PakjeGemak if country is NL and not in admin
-        if(!$helper->isAdmin()){
-            if($request->getDestCountryId() == 'NL' && $this->getConfigData('pakjegemak_active') == 1)
-            {
-                $currentRate = current($result->getRatesByCarrier($this->_code));
+        if (!$helper->isAdmin()
+            && 'NL' === $request->getDestCountryId()
+            && $this->getConfigFlag('pakjegemak_active')
+            && $this->_pakjeGemakValidOrderAmount()
+        ) {
+            $currentRate = current($result->getRatesByCarrier($this->_code));
 
-                if($currentRate)
-                {
-                    $currentPrice = $currentRate->getPrice();
-                    $pakjegemakPrice = floatval($this->getConfigData('pakjegemak_fee'));
+            if ($currentRate) {
+                $currentPrice = $currentRate->getPrice();
+                $pakjegemakPrice = floatval($this->getConfigData('pakjegemak_fee'));
 
-                    // use a modified clone of the configured shipping rate
-                    $pakjegemakRate = clone $currentRate;
+                // use a modified clone of the configured shipping rate
+                $pakjegemakRate = clone $currentRate;
 
-                    $pakjegemakRate->setMethod('pakjegemak');
-                    $pakjegemakRate->setMethodTitle('Pakjegemak');
-                    $pakjegemakRate->setPrice($currentPrice + $pakjegemakPrice);
+                $pakjegemakRate->setMethod('pakjegemak');
+                $pakjegemakRate->setMethodTitle($this->getConfigData('pakjegemak_title'));
+                $pakjegemakRate->setPrice($currentPrice + $pakjegemakPrice);
 
-                    $result->append($pakjegemakRate);
-                }
+                $result->append($pakjegemakRate);
             }
         }
 
-
         return $result;
+    }
+
+    /**
+     * Checks config values and quote to see if the total order value is valid for PakjeGemak
+     *
+     * @return bool
+     */
+    protected function _pakjeGemakValidOrderAmount()
+    {
+        if (!$this->getConfigFlag('pakjegemak_min_order_enabled')) {
+            return true;
+        }
+
+        $minOrderTotal = $this->getConfigData('pakjegemak_min_order_total');
+
+        if (!$minOrderTotal) {
+            return true;
+        }
+
+        /**
+         * We have to collect the totals because they have not always been loaded at this point
+         * @var Mage_Sales_Model_Quote $quote
+         */
+        $quote = Mage::getSingleton('checkout/session')->getQuote()->collectTotals();
+        $baseOrderTotal = $quote->getBaseSubtotalWithDiscount();
+
+        if ($baseOrderTotal < $minOrderTotal) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

@@ -72,6 +72,7 @@ class TIG_MyParcel2014_Adminhtml_ConfigController extends Mage_Adminhtml_Control
          */
         $api      = $myparcelShipment->getApi();
         $response = $api->createRetourlinkRequest($consignmentId)
+                        ->setStoreId($shipment->getOrder()->getStoreId())
                         ->sendRequest()
                         ->getRequestResponse();
 
@@ -89,9 +90,13 @@ class TIG_MyParcel2014_Adminhtml_ConfigController extends Mage_Adminhtml_Control
         $myparcelShipment->save();
 
         //set shipment comment
-        $comment = $helper->__('Retourlink generated: %s',$response['retourlink']);
+        $aLink = '<a target="_blank" href="'.$response['retourlink'].'">'.$response['retourlink'].'</a>';
+        $comment = $helper->__('Retourlink generated: %s',$aLink);
         $shipment->addComment($comment,0,1);
         $shipment->save();
+
+        //add success message
+        $helper->addSessionMessage('adminhtml/session', null , 'success', $comment);
 
         //redirect to previous screen
         $this->_redirectReferer();
@@ -118,6 +123,7 @@ class TIG_MyParcel2014_Adminhtml_ConfigController extends Mage_Adminhtml_Control
          */
         $api      = $myparcelShipment->getApi();
         $response = $api->createConsignmentCreditRequest($consignmentId)
+                        ->setStoreId($shipment->getOrder()->getStoreId())
                         ->sendRequest()
                         ->getRequestResponse();
 
@@ -126,7 +132,12 @@ class TIG_MyParcel2014_Adminhtml_ConfigController extends Mage_Adminhtml_Control
          */
         if(!is_array($response) || $response['success'] == false){
 
-            $message = $helper->__('Credit has not been created, check MyParcel backend for details');
+            if($response['success'] == false){
+                $message = $helper->__('The consignment is already credited.');
+            }else{
+                $message = $helper->__('Credit has not been created, check MyParcel backend for details');
+            }
+
             $helper->addSessionMessage('adminhtml/session','MYPA-0021', 'warning');
             $helper->logException($message);
         }

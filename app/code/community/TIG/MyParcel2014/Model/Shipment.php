@@ -50,6 +50,7 @@
  * @method boolean hasApi()
  * @method boolean hasShipmentIncrementId()
  * @method boolean hasBarcodeSend()
+ * @method boolean hasShipmentType()
  *
  * @method string getShipmentId()
  * @method string getConsignmentId()
@@ -65,6 +66,7 @@
  * @method int    getInsuredAmount()
  * @method int    getBarcodeSend()
  * @method int    getCustomsContentType()
+ * @method string getShipmentType()
  *
  * @method TIG_MyParcel2014_Model_Shipment setShipmentId(int $value)
  * @method TIG_MyParcel2014_Model_Shipment setOrderId(int $value)
@@ -83,6 +85,7 @@
  * @method TIG_MyParcel2014_Model_Shipment setRetourlink(string $value)
  * @method TIG_MyParcel2014_Model_Shipment setIsCredit(int $value)
  * @method TIG_MyParcel2014_Model_Shipment setCustomsContentType(int $value)
+ * @method TIG_MyParcel2014_Model_Shipment setShipmentType(string $value)
  *
  */
 class TIG_MyParcel2014_Model_Shipment extends Mage_Core_Model_Abstract
@@ -97,6 +100,13 @@ class TIG_MyParcel2014_Model_Shipment extends Mage_Core_Model_Abstract
      */
     const STATUS_NEW       = 'new';
     const STATUS_CONFIRMED = 'Aangemeld';
+
+    /**
+     * Supported shipment types.
+     */
+    const TYPE_LETTER_BOX = 'letter_box';
+    const TYPE_NORMAL     = 'normal';
+    const TYPE_UNPAID  = 'unstamped';
 
     /**
      * Initialize the shipment
@@ -344,36 +354,53 @@ class TIG_MyParcel2014_Model_Shipment extends Mage_Core_Model_Abstract
     }
 
     /**
+     * get the insured amount
+     *
      * @return array
      */
     public function getInsuredOption()
     {
+        //load helper, store id and orderTotal
         $helper            = Mage::helper('tig_myparcel');
         $storeId           = $this->getOrderStoreId();
         $orderTotalShipped = $this->getOrderTotal();
-        $insuredType       = 'insured_50';
-        if($orderTotalShipped > 50 && $orderTotalShipped < 250){
-            $insuredType = 'insured_250';
-        }elseif($orderTotalShipped > 250){
-            $insuredType = 'insured_500';
+
+        //get the insured values
+        $insuredType50     = $helper->getConfig('insured_50','shipment',$storeId);
+        $insuredType250    = $helper->getConfig('insured_250','shipment',$storeId);
+        $insuredType500    = $helper->getConfig('insured_500','shipment',$storeId);
+
+        //check if the values are not empty/zero.
+        $insuredType50     = (!empty($insuredType50) && $insuredType50 > 0)? $insuredType50 : false;
+        $insuredType250    = (!empty($insuredType250) && $insuredType250 > 0)? $insuredType250 : false;
+        $insuredType500    = (!empty($insuredType500) && $insuredType500 > 0)? $insuredType500 : false;
+
+
+        if(false !== $insuredType500 && $orderTotalShipped > $insuredType500){
+            $insuredValue = 500;
+        }elseif(false !== $insuredType250 && $orderTotalShipped > $insuredType250){
+            $insuredValue = 250;
+        }elseif(false !== $insuredType50 && $orderTotalShipped > $insuredType50){
+            $insuredValue = 50;
+        }else{
+            $insuredValue = 0;
         }
 
-        $configValue = $helper->getConfig($insuredType,'shipment',$storeId);
-        if(!empty($configValue) && $configValue > 0){
-            if($orderTotalShipped < $configValue){
-                return array(
-                    'option'         => 'insured',
-                    'selected'       => 1,
-                    'insured_amount' => $configValue,
-                );
-            }
-        }
-
-        return array(
+        $returnArray = array(
             'option'         => 'insured',
             'selected'       => 0,
             'insured_amount' => 0,
         );
+
+        if($insuredValue > 0){
+            $returnArray = array(
+                'option'         => 'insured',
+                'selected'       => 1,
+                'insured_amount' => $insuredValue,
+            );
+        }
+
+        return $returnArray;
     }
 
     /**
@@ -408,18 +435,26 @@ class TIG_MyParcel2014_Model_Shipment extends Mage_Core_Model_Abstract
          * If any consignment options were set in the registry, those will be added as well.
          */
         $registryOptions = Mage::registry('tig_myparcel_consignment_options');
-        if (!empty($registryOptions) && is_array($registryOptions)) {
+
+        $filteredOptions = $registryOptions;
+        unset($filteredOptions['create_consignment']);
+        unset($filteredOptions['type_consignment']);
+
+
+
+        if (!empty($filteredOptions) && is_array($filteredOptions)) {
             $consignmentOptions = array_merge($consignmentOptions, $registryOptions);
         }
 
         /**
-         * is only empty and null when the myparcel shipment is created in a mass-action
+         * is only empty when the myparcel shipment is created in a mass-action
          */
-        if(empty($consignmentOptions) && is_null($registryOptions)){
+
+        if(empty($consignmentOptions) && empty($filteredOptions)){
             $this->calculateConsignmentOptions();
+            $this->setDataUsingMethod('shipment_type', $registryOptions['type_consignment']);
             return $this;
         }
-
 
         /**
          * Add the options.
@@ -434,6 +469,12 @@ class TIG_MyParcel2014_Model_Shipment extends Mage_Core_Model_Abstract
                 )
             ) {
                 continue;
+            }
+
+            if ($option == 'shipment_type') {
+                if (!$this->_isValidType($value)) {
+                    $value = self::TYPE_NORMAL;
+                }
             }
 
             $this->setDataUsingMethod($option, $value);
@@ -484,6 +525,7 @@ class TIG_MyParcel2014_Model_Shipment extends Mage_Core_Model_Abstract
          */
         $api = $this->getApi();
         $response = $api->createConsignmentRequest($this)
+                        ->setStoreId($this->getOrder()->getStoreId())
                         ->sendRequest()
                         ->getRequestResponse();
 
@@ -511,18 +553,24 @@ class TIG_MyParcel2014_Model_Shipment extends Mage_Core_Model_Abstract
             $isSend   = $helper->sendBarcodeEmail($barcode,$shipment);
             $this->setBarcode($barcode);
             $status = self::STATUS_CONFIRMED;
+
+            //add comment to order-comment history
+            $shippingAddress = $this->getShippingAddress();
+            $barcodeUrl      = $helper->getBarcodeUrl($barcode, $shippingAddress);
             if($isSend){
                 //add comment to order-comment history
-                $comment = $helper->__('Track&amp;Trace e-mail is send: %s',$helper->getBarcodeUrl($barcode));
-                $helper->log($comment);
-                $order = $shipment->getOrder();
-                $order->addStatusHistoryComment($comment);
-                $order->setEmailSent(true);
-                $order->save();
+                $comment = $helper->__('Track&amp;Trace e-mail is send: %s', $barcodeUrl);
 
                 //flag the myparcel shipment that barcode
                 $this->setBarcodeSend(true);
+            } else {
+                $comment = $helper->__('Track&amp;Trace link: %s', $barcodeUrl);
             }
+            $helper->log($comment);
+            $order = $shipment->getOrder();
+            $order->addStatusHistoryComment($comment);
+            $order->setEmailSent(false);
+            $order->save();
         }
 
         /**
@@ -563,7 +611,7 @@ class TIG_MyParcel2014_Model_Shipment extends Mage_Core_Model_Abstract
         }
 
         $carrierCode = self::MYPARCEL_CARRIER_CODE;
-        $carrierTitle = Mage::getStoreConfig('carriers/tig_myparcel/name', $shipment->getStoreId());
+        $carrierTitle = Mage::getStoreConfig('carriers/' . $carrierCode . '/name', $shipment->getStoreId());
 
         $data = array(
             'carrier_code' => $carrierCode,
@@ -587,6 +635,49 @@ class TIG_MyParcel2014_Model_Shipment extends Mage_Core_Model_Abstract
                     ->save();
 
         return $this;
+    }
+
+    /**
+     * Checks if the given shipment type is supported by this extension.
+     *
+     * @param $type
+     *
+     * @return bool
+     */
+    protected function _isValidType($type)
+    {
+        $isValid = false;
+        switch ($type) {
+            case self::TYPE_NORMAL:
+                $isValid = true;
+                break;
+            case self::TYPE_LETTER_BOX: //no break
+            case self::TYPE_UNPAID:
+                if ($this->isDutchShipment()) {
+                    $isValid = true;
+                }
+                break;
+            //no default
+        }
+
+        return $isValid;
+    }
+
+    /**
+     * Check if this shipment's destination is the Netherlands.
+     *
+     * @return bool
+     */
+    public function isDutchShipment()
+    {
+        $shippingAddress = $this->getShippingAddress();
+        $country = $shippingAddress->getCountryId();
+
+        if ($country == 'NL') {
+            return true;
+        }
+
+        return false;
     }
 
     /**

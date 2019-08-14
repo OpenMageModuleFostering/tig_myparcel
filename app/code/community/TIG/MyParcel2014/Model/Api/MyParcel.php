@@ -39,7 +39,6 @@
  *
  * Myparcel API class. Contains all the functionality to connect to Myparcel and get information or create consignments
  *
- * @method TIG_MyParcel2014_Model_Api_MyParcel setStoreId(int $value)
  * @method bool hasStoreId()
  */
 class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
@@ -55,6 +54,7 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
     const REQUEST_TYPE_RETRIEVE_STATUS     = 'retrieve-status';
     const REQUEST_TYPE_CONSIGNMENT_CREDIT  = 'consignment-credit';
     const REQUEST_TYPE_CREATE_RETOURLINK   = 'create-retourlink';
+    const REQUEST_TYPE_GET_LOCATIONS       = 'pickup';
 
     /**
      * @var string
@@ -112,12 +112,19 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
         $helper   = Mage::helper('tig_myparcel');
         $username = $helper->getConfig('username', 'api', $storeId);
         $key      = $helper->getConfig('key', 'api', $storeId, true);
+        $url   = $helper->getConfig('url');
+
+        if (Mage::app()->getStore()->isCurrentlySecure()) {
+            if(!Mage::getStoreConfig('tig_myparcel/general/ssl_handshake')){
+                $url = str_replace('http://', 'https://', $url);
+            }
+        }
 
         if (empty($username) && empty($key)) {
             return;
         }
 
-        $this->apiUrl      = $helper->getConfig('url') . '/api/';
+        $this->apiUrl      = $url . '/api/';
         $this->apiUsername = $username;
         $this->apiKey      = $key;
     }
@@ -135,6 +142,17 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
 
         $this->setStoreId($storeId);
         return $storeId;
+    }
+
+    public function setStoreId($storeId)
+    {
+        $helper = Mage::helper('tig_myparcel');
+
+        $this->storeId     = $storeId;
+        $this->apiUsername = $helper->getConfig('username', 'api', $storeId);
+        $this->apiKey      = $helper->getConfig('key', 'api', $storeId, true);
+
+        return $this;
     }
 
     /**
@@ -155,6 +173,11 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
         $errorDetail = $this->requestErrorDetail;
 
         if(!$errorDetail){
+
+            if(!empty($this->requestError)){
+                return $this->requestError;
+            }
+
             return false;
         }
 
@@ -177,9 +200,9 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
                 if(is_array($errorMessage) && !empty($errorMessage))
                 {
                     $return .= ':<br/>'."\n";
-                    foreach($errorMessage as $key => $value)
+                    foreach($errorMessage as $messageKey => $value)
                     {
-                        $return .= $key .' - '.$value[0];
+                        $return .= $messageKey .' - '.$value[0];
                     }
                 }
             }
@@ -195,6 +218,25 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
     }
 
     /**
+     * Sets the parameters for an API call based on a string with all required request parameters and the requested API
+     * method.
+     *
+     * @param string $requestString
+     * @param string $requestType
+     *
+     * @return $this
+     */
+    protected function _setRequestParameters($requestString, $requestType)
+    {
+        $this->requestString = $requestString;
+        $this->requestType   = $requestType;
+
+        $this->_hashRequest();
+
+        return $this;
+    }
+
+    /**
      * send the created request to MyParcel
      *
      * @return $this|false|array|string
@@ -205,8 +247,13 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
             return false;
         }
 
+        //instantiate the helper
+        $helper = Mage::helper('tig_myparcel');
+
+        //curl request string
         $body = $this->requestString . '&signature=' . $this->requestHash;
 
+        //curl options
         $options = array(
             CURLOPT_POST           => true,
             CURLOPT_FOLLOWLOCATION => true,
@@ -218,37 +265,45 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
             'timeout' => 60,
         );
 
+        //complete request url
         $url = $this->apiUrl . $this->requestType;
-
-        $helper = Mage::helper('tig_myparcel');
-
+        // log the request url
         $helper->log($url);
 
+        //for logging
         parse_str(urldecode($body), $bodyArray);
         $bodyArray['json'] = json_decode($bodyArray['json']);
-
         $helper->log($bodyArray['json']);
 
-        $request = new Varien_Http_Adapter_Curl();
+        //instantiate the curl adapter
+        $request = new TIG_MyParcel2014_Model_Api_Curl();
+        //add the options
         foreach($options as $option => $value)
         {
             $request->addOption($option, $value);
         }
+
+        //do the curl request
         $request->setConfig($config)
             ->write(Zend_Http_Client::POST, $url, '1.1', array(), $body);
 
+        //read the response
         $response = $request->read();
+        //log the response
         $helper->log(json_decode($response, true));
 
+        //check if there are curl-errors
         if ($response === false) {
             $error              = $request->getError();
             $this->requestError = $error;
-
+            //$this->requestErrorDetail = $error;
             return $this;
         }
 
+        //decode the json response
         $result = json_decode($response, true);
 
+        //check if the response has errors codes
         if(isset($result['error'])){
             $this->requestError = $result['error'];
             unset($result['error']);
@@ -260,34 +315,10 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
 
         $this->requestResult = $result;
 
+        //close the server connection with MyParcel
         $request->close();
 
         return $this;
-    }
-
-    /**
-     * Checks if all the requirements are set to send a request to MyParcel
-     * @return bool
-     */
-    protected function _checkConfigForRequest()
-    {
-        if(empty($this->apiUsername) || empty($this->apiKey)){
-            return false;
-        }
-
-        if(empty($this->requestType)){
-            return false;
-        }
-
-        if(empty($this->requestString)){
-            return false;
-        }
-
-        if(empty($this->requestHash)){
-            return false;
-        }
-
-        return true;
     }
 
     /**
@@ -384,6 +415,8 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
     }
 
     /**
+     * create a request string for checking the status of a consignment
+     *
      * @param $consignmentId
      * @return $this
      */
@@ -401,6 +434,8 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
     }
 
     /**
+     * create a request string for crediting a consignment
+     *
      * @param $consignmentId
      * @return $this
      */
@@ -418,6 +453,8 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
     }
 
     /**
+     * create a request string for generating a retour-url
+     *
      * @param $consignmentId
      * @return $this
      */
@@ -435,6 +472,55 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
     }
 
     /**
+     * create a request string for getting the locations
+     *
+     * @param array $data
+     *
+     * @return $this
+     */
+    public function createGetLocationsRequest($data)
+    {
+        if (empty($data['courier'])) {
+            $data['courier'] = 'postnl';
+        }
+        if (empty($data['courier'])) {
+            $data['country'] = 'nl';
+        }
+
+        $requestString = $this->_createRequestString($data);
+
+        $this->_setRequestParameters($requestString, self::REQUEST_TYPE_GET_LOCATIONS);
+
+        return $this;
+    }
+
+    /**
+     * Checks if all the requirements are set to send a request to MyParcel
+     *
+     * @return bool
+     */
+    protected function _checkConfigForRequest()
+    {
+        if(empty($this->apiUsername) || empty($this->apiKey)){
+            return false;
+        }
+
+        if(empty($this->requestType)){
+            return false;
+        }
+
+        if(empty($this->requestString)){
+            return false;
+        }
+
+        if(empty($this->requestHash)){
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Gets the shipping address and product code data for this shipment.
      *
      * @param TIG_MyParcel2014_Model_Shipment $myParcelShipment
@@ -447,6 +533,11 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
         $order = $myParcelShipment->getOrder();
         $storeId = $order->getStore()->getId();
 
+        if($storeId != $this->getStoreId()){
+            $this->apiUsername = $helper->getConfig('username', 'api', $storeId);
+            $this->apiKey      = $helper->getConfig('key', 'api', $storeId, true);
+        }
+
         $shippingAddress = $myParcelShipment->getShippingAddress();
         $streetData      = $helper->getStreetData($shippingAddress,$storeId);
         $email           = $myParcelShipment->getOrder()->getCustomerEmail();
@@ -454,11 +545,11 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
         $data = array(
             'ToAddress'     => array(
                 'country_code'    => $shippingAddress->getCountry(),
-                'name'            => $shippingAddress->getName(),
+                'name'            => trim($shippingAddress->getName()),
                 'business'        => $shippingAddress->getCompany(),
-                'postcode'        => $shippingAddress->getPostcode(),
-                'street'          => $streetData['streetname'],
-                'house_number'    => $streetData['housenumber'],
+                'postcode'        => trim($shippingAddress->getPostcode()),
+                'street'          => trim($streetData['streetname']),
+                'house_number'    => trim($streetData['housenumber']),
                 'number_addition' => $streetData['housenumberExtension'],
                 'town'            => $shippingAddress->getCity(),
                 'email'           => $email,
@@ -493,26 +584,22 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
             $totalWeight = 0;
             $items = $myParcelShipment->getOrder()->getAllItems();
             $i = 0;
-            foreach($items as $item)
-            {
-                if($item->getProductType() == 'simple')
-                {
+            foreach($items as $item) {
+                if($item->getProductType() == 'simple') {
                     $parentId = $item->getParentItemId();
                     $weight = floatval($item->getWeight());
                     $price = floatval($item->getPrice());
                     $qty = intval($item->getQtyOrdered());
 
-                    if(!empty($parentId))
-                    {
+                    if(!empty($parentId)) {
                         $parent = Mage::getModel('sales/order_item')->load($parentId);
 
                         // TODO: check for multiple test cases with configurable and bundled products
-                        if(empty($weight))
-                        {
+                        if (empty($weight)) {
                             $weight = $parent->getWeight();
                         }
-                        if(empty($price))
-                        {
+
+                        if (empty($price)) {
                             $price = $parent->getPrice();
                         }
                     }
@@ -552,13 +639,29 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
                 'country_code'    => $pgAddress->getCountry(),
                 'name'            => $pgAddress->getName(),
                 'business'        => $pgAddress->getCompany(),
-                'postcode'        => $pgAddress->getPostcode(),
+                'postcode'        => trim($pgAddress->getPostcode()),
                 'street'          => $pgStreetData['streetname'],
                 'house_number'    => $pgStreetData['housenumber'],
                 'number_addition' => $pgStreetData['housenumberExtension'],
                 'town'            => $pgAddress->getCity(),
                 'email'           => $email,
             );
+        }
+
+        /**
+         * Add the shipment type parameter.
+         */
+
+        switch ($myParcelShipment->getShipmentType()) {
+            case $myParcelShipment::TYPE_LETTER_BOX:
+                $data['shipment_type'] = 'letterbox';
+                break;
+            case $myParcelShipment::TYPE_UNPAID:
+                $data['shipment_type'] = 'unpaid_letter';
+                break;
+            case $myParcelShipment::TYPE_NORMAL:
+            default:
+                $data['shipment_type'] = 'standard';
         }
 
         return $data;
@@ -630,25 +733,6 @@ class TIG_MyParcel2014_Model_Api_MyParcel extends Varien_Object
         );
 
         return $string;
-    }
-
-    /**
-     * Sets the parameters for an API call based on a string with all required request parameters and the requested API
-     * method.
-     *
-     * @param string $requestString
-     * @param string $requestType
-     *
-     * @return $this
-     */
-    protected function _setRequestParameters($requestString, $requestType)
-    {
-        $this->requestString = $requestString;
-        $this->requestType   = $requestType;
-
-        $this->_hashRequest();
-
-        return $this;
     }
 
     /**
