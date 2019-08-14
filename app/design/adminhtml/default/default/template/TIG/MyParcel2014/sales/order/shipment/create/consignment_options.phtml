@@ -1,0 +1,131 @@
+<?php
+/**
+ *                  ___________       __            __
+ *                  \__    ___/____ _/  |_ _____   |  |
+ *                    |    |  /  _ \\   __\\__  \  |  |
+ *                    |    | |  |_| ||  |   / __ \_|  |__
+ *                    |____|  \____/ |__|  (____  /|____/
+ *                                              \/
+ *          ___          __                                   __
+ *         |   |  ____ _/  |_   ____ _______   ____    ____ _/  |_
+ *         |   | /    \\   __\_/ __ \\_  __ \ /    \ _/ __ \\   __\
+ *         |   ||   |  \|  |  \  ___/ |  | \/|   |  \\  ___/ |  |
+ *         |___||___|  /|__|   \_____>|__|   |___|  / \_____>|__|
+ *                  \/                           \/
+ *                  ________
+ *                 /  _____/_______   ____   __ __ ______
+ *                /   \  ___\_  __ \ /  _ \ |  |  \\____ \
+ *                \    \_\  \|  | \/|  |_| ||  |  /|  |_| |
+ *                 \______  /|__|    \____/ |____/ |   __/
+ *                        \/                       |__|
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Creative Commons License.
+ * It is available through the world-wide-web at this URL:
+ * http://creativecommons.org/licenses/by-nc-nd/3.0/nl/deed.en_US
+ * If you are unable to obtain it through the world-wide-web, please send an email
+ * to servicedesk@tig.nl so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this module to newer
+ * versions in the future. If you wish to customize this module for your
+ * needs please contact servicedesk@tig.nl for more information.
+ *
+ * @copyright   Copyright (c) 2014 Total Internet Group B.V. (http://www.totalinternetgroup.nl)
+ * @license     http://creativecommons.org/licenses/by-nc-nd/3.0/nl/deed.en_US
+ *
+ * @var TIG_MyParcel2014_Block_Adminhtml_Sales_Order_Shipment_Create_ConsignmentOptions $this
+ */
+
+$_countryNeedsCustoms       = $this->countryNeedsCustoms();
+$_storeId                   = $this->getOrderStoreId();
+$_helper                    = Mage::helper('tig_myparcel');
+$_customsTypeOptions        = $this->getCustomsTypeOptions();
+$_defaultCustomsCode        = $_helper->getConfig('customs_type', 'shipment', $_storeId);
+$_defaultCustomsContentCode = $_helper->getConfig('customs_hstariffnr', 'shipment', $_storeId);
+$_homeSelected              = $this->getIsHomeSelected();
+$_signatureSelected         = $this->getIsSignatureOnReceipt();
+$_returnNoAnswerSelected    = $this->getIsReturnOnNoAnswer();
+$_insured                   = $this->getIsInsured();
+$_insuredSelected           = '';
+$_insuredAmount             = 0;
+if(is_array($_insured)){
+    $_insuredAmount = $_insured['insuredAmount'];
+    $_insuredSelected = $_insured['selected'];
+}
+
+?>
+<div id="tig_myparcel_consignment_options">
+    <p class="normal"><strong><?php echo $this->__('Myparcel Consignment Options');?></strong></p>
+    <div id="tig_myparcel_form_container">
+        <?php if(!$_countryNeedsCustoms):?>
+        <p>
+            <label for="tig_myparcel_home_address_only" class="normal"><?php echo $this->__('Home address only');?></label>
+            <input id="tig_myparcel_home_address_only" type="checkbox" value="1" name="tig_myparcel[home_address_only]" <?php echo $_homeSelected;?> />
+        </p>
+        <p>
+            <label for="tig_myparcel_signature_on_receipt" class="normal"><?php echo $this->__('Signature on receipt');?></label>
+            <input id="tig_myparcel_signature_on_receipt" type="checkbox" value="1" name="tig_myparcel[signature_on_receipt]" <?php echo $_signatureSelected;?> />
+        </p>
+        <p>
+            <label for="tig_myparcel_return_if_no_answer" class="normal"><?php echo $this->__('Return if no answer');?></label>
+            <input id="tig_myparcel_return_if_no_answer" type="checkbox" value="1" name="tig_myparcel[return_if_no_answer]" <?php echo $_returnNoAnswerSelected;?> />
+        </p>
+        <p>
+            <label for="tig_myparcel_insured" class="normal"><?php echo $this->__('Insured');?></label>
+            <input id="tig_myparcel_insured" type="checkbox" value="1" name="tig_myparcel[insured]" <?php echo $_insuredSelected;?> />
+        </p>
+        <p style="display:none;">
+            <label for="tig_myparcel_insured_amount" class="normal"><?php echo $this->__('Insured amount');?></label>
+            <input id="tig_myparcel_insured_amount" class="validate-digits validate-digits-range digits-range-0-5000" type="text" value="<?php echo $_insuredAmount;?>" name="tig_myparcel[insured_amount]" />
+        </p>
+        <?php endif;?>
+        <?php if($_countryNeedsCustoms):?>
+        <p>
+            <label for="tig_myparcel_customs_type" class="normal"><?php echo $this->__('Customs Shipment Type');?></label>
+            <select id="tig_myparcel_customs_type" class="select required-entry" name="tig_myparcel[customs_type]">
+                <?php foreach($_customsTypeOptions as $_option):?>
+                    <?php $_selected = ''; ?>
+                    <?php if ($_option['value'] == $_defaultCustomsCode): ?>
+                        <?php $_selected = 'selected="selected"'; ?>
+                    <?php endif; ?>
+
+                    <option value="<?php echo $_option['value']; ?>" <?php echo $_selected ?>>
+                        <?php echo $this->__($_option['label']); ?>
+                    </option>
+                <?php endforeach;?>
+            </select>
+        </p>
+        <p>
+            <label for="tig_myparcel_customs_content_code" class="normal"><?php echo $this->__('Customs Content HS Code');?></label>
+            <input id="tig_myparcel_customs_content_code" type="text" value="<?php echo $_defaultCustomsContentCode;?>" name="tig_myparcel[customs_content_type]" />
+        </p>
+        <p><small><?php echo $this->__('Select content type for Cross Domestic products, see <a href="http://gebruikstarief.douane.nl" target="_blank">http://gebruikstarief.douane.nl</a>');?></small></p>
+        <?php endif;?>
+    </div>
+</div>
+<script type ="text/javascript">
+    //<![CDATA[
+    document.observe('dom:loaded', function() {
+        $$('.order-totals-bottom div.a-right')[0].insert({
+            before: $('tig_myparcel_consignment_options')
+        });
+
+        var insuredCheckbox = $('tig_myparcel_insured');
+        var insuredAmountField = $('tig_myparcel_insured_amount').up();
+        if (insuredCheckbox.checked) {
+            insuredAmountField.show();
+        }
+
+        insuredCheckbox.observe('click', function() {
+            if (insuredCheckbox.checked) {
+                insuredAmountField.show();
+            } else {
+                insuredAmountField.hide();
+            }
+        });
+    });
+    //]]>
+</script>

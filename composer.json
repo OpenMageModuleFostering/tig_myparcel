@@ -1,0 +1,16 @@
+{
+    "name": "OpenMageModuleFostering/tig_myparcel",
+    "type": "magento-module",
+    "license": "Creative-Commons-License",
+    "homepage": "",
+    "description": "The official shipping extension for MyParcel",
+    "authors": [
+    {
+        "name": "TIG",
+        "email": "servicedesk@totalinternetgroup.nl"
+    }
+],
+    "suggest": {
+        "magento-hackathon/magento-composer-installer": "*"
+    }
+}

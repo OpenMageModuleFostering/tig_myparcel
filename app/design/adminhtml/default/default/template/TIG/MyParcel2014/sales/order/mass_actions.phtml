@@ -1,0 +1,127 @@
+<?php
+/**
+ *                  ___________       __            __
+ *                  \__    ___/____ _/  |_ _____   |  |
+ *                    |    |  /  _ \\   __\\__  \  |  |
+ *                    |    | |  |_| ||  |   / __ \_|  |__
+ *                    |____|  \____/ |__|  (____  /|____/
+ *                                              \/
+ *          ___          __                                   __
+ *         |   |  ____ _/  |_   ____ _______   ____    ____ _/  |_
+ *         |   | /    \\   __\_/ __ \\_  __ \ /    \ _/ __ \\   __\
+ *         |   ||   |  \|  |  \  ___/ |  | \/|   |  \\  ___/ |  |
+ *         |___||___|  /|__|   \_____>|__|   |___|  / \_____>|__|
+ *                  \/                           \/
+ *                  ________
+ *                 /  _____/_______   ____   __ __ ______
+ *                /   \  ___\_  __ \ /  _ \ |  |  \\____ \
+ *                \    \_\  \|  | \/|  |_| ||  |  /|  |_| |
+ *                 \______  /|__|    \____/ |____/ |   __/
+ *                        \/                       |__|
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Creative Commons License.
+ * It is available through the world-wide-web at this URL:
+ * http://creativecommons.org/licenses/by-nc-nd/3.0/nl/deed.en_US
+ * If you are unable to obtain it through the world-wide-web, please send an email
+ * to servicedesk@tig.nl so we can send you a copy immediately.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade this module to newer
+ * versions in the future. If you wish to customize this module for your
+ * needs please contact servicedesk@tig.nl for more information.
+ *
+ * @copyright   Copyright (c) 2014 Total Internet Group B.V. (http://www.tig.nl)
+ * @license     http://creativecommons.org/licenses/by-nc-nd/3.0/nl/deed.en_US
+ *
+ * @var TIG_MyParcel2014_Block_Adminhtml_Sales_Order_Shipment_ShippingInfo $this
+ */
+?>
+<?php if(Mage::helper('tig_myparcel')->getConfig('print_orientation') == 'A4'): ?>
+<div id="print_container" style="display:none;">
+    <div id="print_pages">
+        <div class="print_page">1</div>
+        <div class="print_page">2</div>
+        <div class="print_page">3</div>
+        <div class="print_page">4</div>
+    </div>
+</div>
+<style type="text/css">
+    #myparcel_popup_window .magento_w,
+    #myparcel_popup_window .magento_e { width:0; }
+    #myparcel_popup_window .magento_content { background-image:none; }
+    #print_pages { width:200px; height:280px; float:left; }
+    #print_pages .print_page { width:90px; height:130px; background:#dfdfdf; margin:10px 0 0 10px; float:left; cursor:pointer; text-indent:-1337px; overflow:hidden; }
+    #print_pages .print_page:hover { background:#eb5e00; }
+</style>
+<script type="text/javascript">
+//<![CDATA[
+(function(){
+    // create hidden input to store the chosen option
+    var inputstart = document.createElement('input');
+    inputstart.id = 'myparcel_print_labels_start';
+    inputstart.type = 'hidden';
+    inputstart.name = 'myparcel_print_labels_start';
+    inputstart.value = 1;
+    document.getElementById('sales_order_grid_massaction-form').appendChild(inputstart);
+
+    // monitor the print option and show A4 positions
+    $('sales_order_grid_massaction-select').observe('change', function(e, el){
+        if($(this).value == 'myparcel_print_labels')
+        {
+            Dialog.info(null, {
+                closable:true,
+                resizable:false,
+                draggable:true,
+                className:'magento',
+                windowClassName:'myparcel-popup-window',
+                title:'<?php echo $this->__('Select A4 print start position'); ?>',
+                top:100,
+                width:200,
+                height:290,
+                zIndex:1337,
+                recenterAuto:true,
+                hideEffect:Element.hide,
+                showEffect:Element.show,
+                id:'myparcel_popup_window'
+            });
+            Dialog.setInfoMessage($('print_container').innerHTML);
+
+            $('print_pages').show();
+
+            var printChildren = $('print_pages').childElements();
+            for(var i = 0, j = printChildren.length; i < j; i++)
+            {
+                printChildren[i].observe('mouseover', function(){
+                    $(this).toggleClassName('hover');
+                });
+                printChildren[i].observe('mouseout', function(){
+                    $(this).toggleClassName('hover');
+                });
+                printChildren[i].observe('click', function(){
+                    $('myparcel_print_labels_start').value = $(this).innerHTML;
+                    Windows.close('myparcel_popup_window');
+                    $$('#sales_order_grid_massaction-form button')[0].click();
+                    $('sales_order_grid_massaction-select').value = '';
+                });
+            }
+
+            $('myparcel_popup_window_close').observe('click', function(){
+                $('sales_order_grid_massaction-select')[0].selected = true;
+            });
+
+            // close popup when clicked outside
+            setTimeout(function(){
+                $('overlay_modal').observe('click', function(){
+                    $('myparcel_popup_window_close').click();
+                    $('sales_order_grid_massaction-select')[0].selected = true;
+                });
+            }, 337);
+        }
+    });
+})();
+//]]>
+</script>
+<?php endif; ?>
