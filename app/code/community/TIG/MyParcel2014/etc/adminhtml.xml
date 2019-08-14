@@ -19,6 +19,10 @@
                             </config>
                         </children>
                     </system>
+                    <tig_myparcel>
+                        <title>MyParcel</title>
+                        <sort_order>300</sort_order>
+                    </tig_myparcel>
                 </children>
             </admin>
         </resources>

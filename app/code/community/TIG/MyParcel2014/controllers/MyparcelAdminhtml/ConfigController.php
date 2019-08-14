@@ -3,6 +3,14 @@
 class TIG_MyParcel2014_MyparcelAdminhtml_ConfigController extends Mage_Adminhtml_Controller_Action
 {
     /**
+     * @return bool
+     */
+    protected function _isAllowed()
+    {
+        return Mage::getSingleton('admin/session')->isAllowed('admin/tig_myparcel');
+    }
+
+    /**
      * Download all MyParcel log files as a zip file.
      *
      * @return $this

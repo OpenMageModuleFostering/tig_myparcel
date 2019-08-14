@@ -49,6 +49,14 @@ class TIG_MyParcel2014_MyparcelAdminhtml_ShipmentController extends Mage_Adminht
     protected $_warnings = array();
 
     /**
+     * @return bool
+     */
+    protected function _isAllowed()
+    {
+        return Mage::getSingleton('admin/session')->isAllowed('admin/tig_myparcel');
+    }
+
+    /**
      * @return array
      */
     public function getWarnings()
