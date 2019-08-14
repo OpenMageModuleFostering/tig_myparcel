@@ -44,7 +44,6 @@ class TIG_MyParcel2014_Block_Adminhtml_System_Config_AdminSecure
     protected function _getValue()
     {
         $isSecure = Mage::getStoreConfigFlag('web/secure/use_in_adminhtml');
-        Mage::log($isSecure, null, 'test.log', true);
         return $isSecure;
     }
 

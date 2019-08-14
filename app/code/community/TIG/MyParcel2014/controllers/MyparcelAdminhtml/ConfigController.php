@@ -1,6 +1,6 @@
 <?php
 
-class TIG_MyParcel2014_Adminhtml_ConfigController extends Mage_Adminhtml_Controller_Action
+class TIG_MyParcel2014_MyparcelAdminhtml_ConfigController extends Mage_Adminhtml_Controller_Action
 {
     /**
      * Download all MyParcel log files as a zip file.

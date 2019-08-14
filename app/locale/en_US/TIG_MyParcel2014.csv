@@ -28,7 +28,7 @@ TIG_MyParcel2014::Customs Content HS Code,Customs Content HS Code
 "TIG_MyParcel2014::Fill in your preferences for a shipment. These settings will only apply for the mass actions in the order grid. When creating a single shipment, these settings can be changed manually.<br/>These settings will activate based on the order total amount. When shipping outside of the EU you can set default values for customs type and customs goods HS code.","Fill in your preferences for a shipment. These settings will only apply for the mass actions in the order grid. When creating a single shipment, these settings can be changed manually.<br/>These settings will activate based on the order total amount. When shipping outside of the EU you can set default values for customs type and customs goods HS code."
 TIG_MyParcel2014::Retourlink e-mail Template,Retourlink e-mail Template
 TIG_MyParcel2014::PLACEHOLDER,PLACEHOLDER
-TIG_MyParcel2014::Track&Trace email template,Track&Trace email template
+TIG_MyParcel2014::Track&amp;Trace email template,Track&amp;Trace email template
 "TIG_MyParcel2014::You can create a new transactional e-mail where the variables {{var tracktrace_url}} and {{var retourlabel_url}} are available. TIP: You can base them on the Order Update template, because {{var order}} is also available.","You can create a new transactional e-mail where the variables {{var tracktrace_url}} and {{var retourlabel_url}} are available. TIP: You can base them on the Order Update template, because {{var order}} is also available."
 TIG_MyParcel2014::Print Orientation,Print Orientation
 TIG_MyParcel2014::Select a standard orientation for printing labels.,Select a standard orientation for printing labels.
@@ -61,7 +61,7 @@ TIG_MyParcel2014::Invalid message type requested: %s.,Invalid message type reque
 TIG_MyParcel2014::No message supplied.,No message supplied.
 TIG_MyParcel2014::No message type supplied.,No message type supplied.
 TIG_MyParcel2014::Click here for more information from the TiG knowledgebase.,Click here for more information from the TiG knowledgebase.
-TIG_MyParcel2014::An error occurred while processing your request: ,An error occurred while processing your request: 
+TIG_MyParcel2014::An error occurred while processing your request: ,An error occurred while processing your request:
 TIG_MyParcel2014::The createConsignment action is currently unavailable.,The createConsignment action is currently unavailable.
 TIG_MyParcel2014::Invalid createConsignment response.,Invalid createConsignment response.
 TIG_MyParcel2014::Shipping status,Shipping status
@@ -177,24 +177,3 @@ TIG_MyParcel2014::Post Office Address,Post Office Address
 "TIG_MyParcel2014::The selected shipment type cannot be used. Pakjegemak shipments can only be created with the normal shipment type.<br/> The Magento shipment has been created without a MyParcel shipment, select a different shipment type or go to the shipment page to create a single MyParcel shipment. <a target=""_blank"" href=""%s"">View shipment</a>","The selected shipment type cannot be used. Pakjegemak shipments can only be created with the normal shipment type.<br/> The Magento shipment has been created without a MyParcel shipment, select a different shipment type or go to the shipment page to create a single MyParcel shipment. <a target=""_blank"" href=""%s"">View shipment</a>"
 TIG_MyParcel2014::Only for dutch shipments,Only for dutch shipments
 "TIG_MyParcel2014::Only for dutch shipments, shipments to outside of the EU are standard ensured up to &euro 200","Only for dutch shipments, shipments to outside of the EU are standard ensured up to &euro 200"
-TIG_MyParcel2014::Force unencrypted MyParcel connection,Force unencrypted MyParcel connection
-"TIG_MyParcel2014::By enabling this, you will force connection to the MyParcel platform over unsecured http, rather than https.","By enabling this, you will force connection to the MyParcel platform over unsecured http, rather than https."
-"TIG_MyParcel2014::In some cases the SSL certification can't be validated, which can lead to problems connection to the MyParcel platform. Only use this if you are aware that ALL communication to MyParcel will be sent over the unsecure https protocol.","In some cases the SSL certification can't be validated, which can lead to problems connection to the MyParcel platform. Only use this if you are aware that ALL communication to MyParcel will be sent over the unsecure https protocol."
-TIG_MyParcel2014::Unfortunately no locations could be found. Please check your postcode and house number combination.,Unfortunately no locations could be found. Please check your postcode and house number combination.
-TIG_MyParcel2014::Search by zipcode and housenumber,Search by zipcode and housenumber
-"TIG_MyParcel2014::Pakjegemak minimum order total, incl. BTW","Pakjegemak minimum order total, incl. BTW"
-TIG_MyParcel2014::Pakjegemak minimum order total enabled,Pakjegemak minimum order total enabled
-TIG_MyParcel2014::MyParcel shipping methods,MyParcel shipping methods
-TIG_MyParcel2014::MyParcel Shipping,MyParcel Shipping
-TIG_MyParcel2014::Selected post office location,Selected post office location
-TIG_MyParcel2014::Powerd by MyParcel,Powerd by MyParcel
-TIG_MyParcel2014::Business hours,Business hours
-TIG_MyParcel2014::Mo,Mo
-TIG_MyParcel2014::Tu,Tu
-TIG_MyParcel2014::We,We
-TIG_MyParcel2014::Th,Th
-TIG_MyParcel2014::Fr,Fr
-TIG_MyParcel2014::Sa,Sa
-TIG_MyParcel2014::Su,Su
-TIG_MyParcel2014::Edit,Edit
-TIG_MyParcel2014::Type Consignment,Type Consignment

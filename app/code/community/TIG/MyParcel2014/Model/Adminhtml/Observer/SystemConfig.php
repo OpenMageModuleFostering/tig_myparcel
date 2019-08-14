@@ -76,7 +76,7 @@ class TIG_MyParcel2014_Model_Adminhtml_Observer_SystemConfig
 
         $helper = Mage::helper('tig_myparcel');
 
-        $onClickUrl = $configEditBlock->getUrl('myparcel_admin/adminhtml_config/downloadLogs');
+        $onClickUrl = $configEditBlock->getUrl('adminhtml/myparcelAdminhtml_config/downloadLogs');
         $onClick = "setLocation('{$onClickUrl}')";
 
         $button = $configEditBlock->getLayout()->createBlock('adminhtml/widget_button');

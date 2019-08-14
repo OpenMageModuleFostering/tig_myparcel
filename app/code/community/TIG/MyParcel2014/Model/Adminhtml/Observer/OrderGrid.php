@@ -139,18 +139,18 @@ class TIG_MyParcel2014_Model_Adminhtml_Observer_OrderGrid extends Varien_Object
             'country_id',
             'IF({{pakjegemak_parent_id}}, {{pakjegemak_country_id}}, {{shipping_country_id}})',
             array(
-                'pakjegemak_parent_id'   => '`pakjegemak_address`.`parent_id`',
-                'pakjegemak_country_id'  => '`pakjegemak_address`.`country_id`',
-                'shipping_country_id'    => '`shipping_address`.`country_id`',
+                'pakjegemak_parent_id'   => 'pakjegemak_address.parent_id',
+                'pakjegemak_country_id'  => 'pakjegemak_address.country_id',
+                'shipping_country_id'    => 'shipping_address.country_id',
             )
         );
         $collection->addExpressionFieldToSelect(
             'postcode',
             'IF({{pakjegemak_parent_id}}, {{pakjegemak_postcode}}, {{shipping_postcode}})',
             array(
-                'pakjegemak_parent_id' => '`pakjegemak_address`.`parent_id`',
-                'pakjegemak_postcode'  => '`pakjegemak_address`.`postcode`',
-                'shipping_postcode'    => '`shipping_address`.`postcode`',
+                'pakjegemak_parent_id' => 'pakjegemak_address.parent_id',
+                'pakjegemak_postcode'  => 'pakjegemak_address.postcode',
+                'shipping_postcode'    => 'shipping_address.postcode',
             )
         );
 
@@ -160,10 +160,10 @@ class TIG_MyParcel2014_Model_Adminhtml_Observer_OrderGrid extends Varien_Object
          * Join sales_flat_order table.
          */
         $select->joinInner(
-            array('order' => $resource->getTableName('sales/order')),
-            '`main_table`.`entity_id`=`order`.`entity_id`',
+            array('tig_myparcel_order' => $resource->getTableName('sales/order')),
+            'main_table.entity_id=tig_myparcel_order.entity_id',
             array(
-                'shipping_method' => 'order.shipping_method',
+                'shipping_method' => 'tig_myparcel_order.shipping_method',
             )
         );
 
@@ -172,13 +172,13 @@ class TIG_MyParcel2014_Model_Adminhtml_Observer_OrderGrid extends Varien_Object
          */
         $select->joinLeft(
             array('shipping_address' => $resource->getTableName('sales/order_address')),
-            "`main_table`.`entity_id`=`shipping_address`.`parent_id` AND `shipping_address`.`address_type`='shipping'",
+            "main_table.entity_id=shipping_address.parent_id AND shipping_address.address_type='shipping'",
             array()
         );
         $select->joinLeft(
             array('pakjegemak_address' => $resource->getTableName('sales/order_address')),
-            "`main_table`.`entity_id`=`pakjegemak_address`.`parent_id` " .
-            "AND `pakjegemak_address`.`address_type`='pakje_gemak'",
+            "main_table.entity_id=pakjegemak_address.parent_id " .
+            "AND pakjegemak_address.address_type='pakje_gemak'",
             array()
         );
 
@@ -187,15 +187,15 @@ class TIG_MyParcel2014_Model_Adminhtml_Observer_OrderGrid extends Varien_Object
          */
         $select->joinLeft(
             array('tig_myparcel_shipment' => $resource->getTableName('tig_myparcel/shipment')),
-            '`main_table`.`entity_id`=`tig_myparcel_shipment`.`order_id`',
+            'main_table.entity_id=tig_myparcel_shipment.order_id',
             array(
                 'shipping_status' => new Zend_Db_Expr(
-                    'group_concat(`tig_myparcel_shipment`.`status` ORDER BY '
-                    . '`tig_myparcel_shipment`.`created_at` DESC SEPARATOR ",")'
+                    'group_concat(tig_myparcel_shipment.status ORDER BY '
+                    . 'tig_myparcel_shipment.created_at DESC SEPARATOR ",")'
                 ),
                 'barcode' => new Zend_Db_Expr(
-                    'group_concat(`tig_myparcel_shipment`.`barcode` ORDER BY '
-                    . '`tig_myparcel_shipment`.`created_at` DESC SEPARATOR ",")'
+                    'group_concat(tig_myparcel_shipment.barcode ORDER BY '
+                    . 'tig_myparcel_shipment.created_at DESC SEPARATOR ",")'
                 ),
             )
         );
@@ -328,7 +328,7 @@ class TIG_MyParcel2014_Model_Adminhtml_Observer_OrderGrid extends Varien_Object
                   'myparcel_print_labels',
                   array(
                       'label' => $helper->__('MyParcel - Create &amp; Print shipping labels'),
-                      'url'   => $adminhtmlHelper->getUrl('myparcel_admin/adminhtml_shipment/massPrintLabels'),
+                      'url'   => $adminhtmlHelper->getUrl('adminhtml/myparcelAdminhtml_shipment/massPrintLabels'),
                       'additional' => array(
                           'type_consignment' => array(
                               'name'    => 'type_consignment',
@@ -357,7 +357,7 @@ class TIG_MyParcel2014_Model_Adminhtml_Observer_OrderGrid extends Varien_Object
                   'myparcel_create_shipments',
                   array(
                       'label' => $helper->__('MyParcel - Create Magento shipments (no labels)'),
-                      'url'   => $adminhtmlHelper->getUrl('myparcel_admin/adminhtml_shipment/massCreateShipments'),
+                      'url'   => $adminhtmlHelper->getUrl('adminhtml/myparcelAdminhtml_shipment/massCreateShipments'),
                   )
               );
 

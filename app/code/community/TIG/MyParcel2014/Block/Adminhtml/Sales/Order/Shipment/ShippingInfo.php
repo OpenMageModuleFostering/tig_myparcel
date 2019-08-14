@@ -110,13 +110,13 @@ class TIG_MyParcel2014_Block_Adminhtml_Sales_Order_Shipment_ShippingInfo extends
     public function getRetourlinkUrl()
     {
         $shipmentId = $this->getRequest()->getParam('shipment_id');
-        return $this->getUrl('myparcel_admin/adminhtml_config/generateRetourlink',array('shipment_id'=>$shipmentId));
+        return $this->getUrl('adminhtml/myparcelAdminhtml_config/generateRetourlink',array('shipment_id'=>$shipmentId));
     }
 
     public function getCreditUrl()
     {
         $shipmentId = $this->getRequest()->getParam('shipment_id');
-        return $this->getUrl('myparcel_admin/adminhtml_config/creditConsignment',array('shipment_id'=>$shipmentId));
+        return $this->getUrl('adminhtml/myparcelAdminhtml_config/creditConsignment',array('shipment_id'=>$shipmentId));
     }
 
     /**

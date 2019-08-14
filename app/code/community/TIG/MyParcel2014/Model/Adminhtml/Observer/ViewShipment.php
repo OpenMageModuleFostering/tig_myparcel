@@ -39,8 +39,8 @@
 
 class TIG_MyParcel2014_Model_Adminhtml_Observer_ViewShipment extends Varien_Object
 {
-    const RETOURLINK_ROUTE         = 'myparcel_admin/adminhtml_config/generateRetourlink';
-    const CREDIT_CONSIGNMENT_ROUTE = 'myparcel_admin/adminhtml_config/creditConsignment';
+    const RETOURLINK_ROUTE         = 'adminhtml/myparcelAdminhtml_config/generateRetourlink';
+    const CREDIT_CONSIGNMENT_ROUTE = 'adminhtml/myparcelAdminhtml_config/creditConsignment';
 
     /**
      * Adds a button to the view-shipment page, allowing the merchant to create a MyParcel-consignment.

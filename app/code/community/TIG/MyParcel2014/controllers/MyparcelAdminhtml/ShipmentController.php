@@ -36,7 +36,7 @@
  * @copyright   Copyright (c) 2014 Total Internet Group B.V. (http://www.totalinternetgroup.nl)
  * @license     http://creativecommons.org/licenses/by-nc-nd/3.0/nl/deed.en_US
  */
-class TIG_MyParcel2014_Adminhtml_ShipmentController extends Mage_Adminhtml_Controller_Action
+class TIG_MyParcel2014_MyparcelAdminhtml_ShipmentController extends Mage_Adminhtml_Controller_Action
 {
     /**
      * Used module name in current adminhtml controller.
@@ -930,8 +930,4 @@ class TIG_MyParcel2014_Adminhtml_ShipmentController extends Mage_Adminhtml_Contr
         return $itemQtys;
     }
 
-    protected function _isAllowed()
-    {
-        return true;
-    }
 }

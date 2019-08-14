@@ -70,7 +70,7 @@ if(true == $_isPakjegemak){
 
 <div id="print_container" style="display:none;">
     <div id="deliveryOptions">
-        <form id="myparcel_create_consignment_form" method="post" action="<?php echo $this->getUrl('myparcel_admin/adminhtml_shipment/createConsignment');?>">
+        <form id="myparcel_create_consignment_form" method="post" action="<?php echo $this->getUrl('adminhtml/myparcelAdminhtml_shipment/createConsignment');?>">
             <input type="hidden" name="shipment_id" value="<?php echo $_shipment->getId();?>" />
             <input type="hidden" name="form_key" value="<?php echo $this->getFormKey(); ?>" />
             <div id="tig_myparcel_consignment_options">
